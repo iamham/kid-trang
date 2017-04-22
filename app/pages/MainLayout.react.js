@@ -34,6 +34,11 @@ const styles = StyleSheet.create({
 })
 
 export default class MainLayout extends Component {
+
+  static propTypes = {
+    firebaseApp: React.PropTypes.object.isRequired,
+  }
+
   state = {
     index: 0,
     routes: [
@@ -51,9 +56,9 @@ export default class MainLayout extends Component {
   renderPage = ({ route }) => {
     switch (route.key) {
     case '1':
-      return <NewRecord />
+      return <NewRecord {...this.props} />
     case '2':
-      return <History />
+      return <History {...this.props} />
     default:
       return null
     }

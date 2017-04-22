@@ -23,11 +23,15 @@ const styles = StyleSheet.create({
 
 export default class NewRecord extends Component {
 
+  static propTypes = {
+    firebaseApp: React.PropTypes.object.isRequired,
+  }
+
   render() {
     return (
       <View style={styles.page}>
         <ScrollView>
-          <NewRecordCard />
+          <NewRecordCard {...this.props} />
         </ScrollView>
         <View style={styles.footer}>
           <Text>Footer Here</Text>

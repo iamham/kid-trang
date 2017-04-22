@@ -6,8 +6,10 @@ import {
   StyleSheet,
   StatusBar,
   Text,
+  TextInput,
   FlatList,
-  View
+  View,
+  Modal
 } from 'react-native'
 import PersonalRecordRow from './PersonalRecordRow.react.js'
 
@@ -36,8 +38,60 @@ const styles = StyleSheet.create({
 
 export default class NewRecordCard extends Component {
 
+  static propTypes = {
+    firebaseApp: React.PropTypes.object.isRequired,
+  }
+
+  state = {
+    showAddPersonal: false,
+    showAddPublic: false,
+    text: '',
+  }
+
+  componentWillMount = () => {
+    const database = this.props.firebaseApp.database()
+  }
+
   onAddMorePersonal = () => {
     return true
+  }
+
+  toggleAddPersonalModal = () => this.setState({ showAddPersonal: !this.state.showAddPersonal })
+  toggleAddPublicModal = () => this.setState({ showAddPublic: !this.state.showAddPublic })
+
+  renderAddPersonalModal = () => {
+    return (
+      <Modal
+        animationType={'slide'}
+        transparent={false}
+        visible={this.state.showAddPersonal}
+        onRequestClose={this.toggleAddPersonalModal}
+        >
+        <View style={styles.container}>
+          <Text>Personal</Text>
+        </View>
+      </Modal>
+    )
+  }
+
+  renderAddPublicModal = () => {
+    return (
+      <Modal
+        animationType={'slide'}
+        transparent={false}
+        visible={this.state.showAddPublic}
+        onRequestClose={this.toggleAddPublicModal}
+        >
+        <View style={styles.container}>
+          <Text>Public</Text>
+          <TextInput
+            style={{height: 40}}
+            placeholder="Food Name"
+            onChangeText={(text) => this.setState({text})}
+          />
+        </View>
+      </Modal>
+    )
   }
 
   renderItem = (item) => {
@@ -55,10 +109,12 @@ export default class NewRecordCard extends Component {
           />
         </View>
         <Button
-          onPress={this.onAddMorePersonal}
+          onPress={this.toggleAddPersonalModal}
           title='+'
           accessibilityLabel='Add more person'
         />
+        {this.renderAddPersonalModal()}
+        {this.renderAddPublicModal()}
       </View>
     )
   }
@@ -68,7 +124,7 @@ export default class NewRecordCard extends Component {
       <View style={styles.card}>
         <Text style={styles.title}>Public List</Text>
         <Button
-          onPress={this.onAddMorePersonal}
+          onPress={this.toggleAddPublicModal}
           title='+'
           accessibilityLabel='Add List'
         />

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { AppRegistry } from 'react-native'
+import { AppRegistry, ToastAndroid, ActivityIndicator, View, StyleSheet } from 'react-native'
 import MainLayout from './app/pages/MainLayout.react.js'
 import OnBoarding from './app/pages/OnBoarding.react.js'
 import * as firebase from 'firebase'
@@ -18,7 +18,20 @@ const firebaseConfig = {
 
 const firebaseApp = firebase.initializeApp(firebaseConfig);
 
+const styles = StyleSheet.create({
+  centering: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+  }
+})
+
 export default class KidTrang extends Component {
+
+  state = {
+    currentUser: null,
+    loading: false,
+  }
 
   componentWillMount = () => {
     const manager = new OAuthManager('KidTrang')
@@ -30,26 +43,53 @@ export default class KidTrang extends Component {
       }
     })
     this.manager = manager
+    const currentUser = this.getIsUserAuthenticated()
+    this.setState({ currentUser: currentUser || false })
   }
 
   getIsUserAuthenticated = () => firebaseApp.auth().currentUser || false
 
   onLogin = () => {
+    this.setState({ loading: true })
     this.manager.authorize('google', {scopes: 'email'})
     .then(resp => {
-      console.warn(resp.response.credentials)
       const credential = firebase.auth.GoogleAuthProvider.credential(resp.response.credentials.idToken)
       firebaseApp.auth().signInWithCredential(credential)
-      .then(resp => console.log('success', resp))
-      .catch(err => console.log('error', err))
+      .then(resp => this.onSuccess(resp))
+      .catch(err => this.onFailure(err))
     })
-    .catch(err => console.log('There was an error', err))
+    .catch(err => this.onFailure(err))
+  }
+
+  onSuccess = (response) => {
+    this.setState({ currentUser: response })
+    ToastAndroid.show('Logged in as ' + response.displayName, ToastAndroid.SHORT)
+  }
+
+  onFailure = (err) => {
+    this.setState({ loading: false })
+    console.warn('Error signing in', err)
+    ToastAndroid.show('There was a problem signing you in, Please try again', ToastAndroid.SHORT)
+  }
+
+  renderLoadingState = () => {
+    return this.state.loading ? (<ActivityIndicator
+      animating={true}
+      style={[styles.centering, {height: 80}]}
+      size="large"
+    />) : null
   }
 
   render = () => {
-    console.log(this.manager)
-    return this.getIsUserAuthenticated() ? <MainLayout /> : <OnBoarding onLogin={this.onLogin}/>
+    console.log(this.getIsUserAuthenticated())
+    if (this.state.currentUser) return <MainLayout firebaseApp={firebaseApp} />
+    return (
+      <View>
+        {this.renderLoadingState()}
+        <OnBoarding onLogin={this.onLogin} />
+      </View>
+    )
   }
 }
 
-AppRegistry.registerComponent('KidTrang', () => KidTrang);
+AppRegistry.registerComponent('KidTrang', () => KidTrang)
